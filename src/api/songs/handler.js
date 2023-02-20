@@ -1,16 +1,50 @@
+const ClientError = require('../../exceptions/ClientError');
+
 /* eslint-disable no-underscore-dangle */
 class SongsHandler {
   constructor(service, validator) {
     this._service = service;
     this._validator = validator;
-    this.postSongsHandler = this.postSongsHandler.bind(this);
-    this.getSongsHandler = this.getSongsHandler.bind(this);
-    this.getSongsByIdHandler = this.getSongsByIdHandler.bind(this);
-    this.putSongsByIdHandler = this.putSongsByIdHandler.bind(this);
-    this.deleteSongsByIdHandler = this.deleteSongsByIdHandler.bind(this);
+    this.postSongHandler = this.postSongHandler.bind(this);
+    // this.getSongsHandler = this.getSongsHandler.bind(this);
+    // this.getSongsByIdHandler = this.getSongsByIdHandler.bind(this);
+    // this.putSongsByIdHandler = this.putSongsByIdHandler.bind(this);
+    // this.deleteSongsByIdHandler = this.deleteSongsByIdHandler.bind(this);
   }
 
-  // async postSongsHandler(request, h) {}
+  async postSongHandler(request, h) {
+    try {
+      this._validator.validateSongsPayload(request.payload);
+      const {
+        title, year, genre, performer, duration, albumId,
+      } = request.payload;
+      const songId = await this._service.addSong({
+        title, year, genre, performer, duration, albumId,
+      });
+      const response = h.response({
+        status: 'success',
+        data: {
+          songId,
+        },
+      }).code(201);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        }).code(error.statusCode);
+        return response;
+      }
+      // server error
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      }).code(500);
+      console.log(error.message);
+      return response;
+    }
+  }
 
   // async getSongsHandler(request, h) {}
 

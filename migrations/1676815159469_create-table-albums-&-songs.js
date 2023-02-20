@@ -38,6 +38,9 @@ exports.up = pgm => {
       type: 'TEXT',
       notNull: true,
     },
+    duration: {
+      type: 'NUMERIC',
+    },
     album_id: {
       type: 'VARCHAR(50)',
       references: 'albums',
