@@ -7,7 +7,7 @@ class SongsHandler {
     this._validator = validator;
     this.postSongHandler = this.postSongHandler.bind(this);
     this.getSongsHandler = this.getSongsHandler.bind(this);
-    // this.getSongsByIdHandler = this.getSongsByIdHandler.bind(this);
+    this.getSongByIdHandler = this.getSongByIdHandler.bind(this);
     // this.putSongsByIdHandler = this.putSongsByIdHandler.bind(this);
     // this.deleteSongsByIdHandler = this.deleteSongsByIdHandler.bind(this);
   }
@@ -74,7 +74,34 @@ class SongsHandler {
     }
   }
 
-  // async getSongsByIdHandler(request, h) {}
+  async getSongByIdHandler(request, h) {
+    try {
+      const { id } = request.params;
+      const song = await this._service.getSongById(id);
+      const response = h.response({
+        status: 'success',
+        data: {
+          song,
+        },
+      }).code(200);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        }).code(error.statusCode);
+        return response;
+      }
+      // server error
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      }).code(500);
+      console.log(error.message);
+      return response;
+    }
+  }
 
   // async putSongsByIdHandler(request, h) {}
 

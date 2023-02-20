@@ -2,6 +2,8 @@
 const { nanoid } = require('nanoid');
 const { Pool } = require('pg');
 const InvariantError = require('../../exceptions/InvariantError');
+const NotFoundError = require('../../exceptions/NotFoundError');
+const { mapSongsToDBModel } = require('../../utils');
 
 class SongsService {
   constructor() {
@@ -31,6 +33,18 @@ class SongsService {
   async getSongs() {
     const result = await this._pool.query('SELECT id, title, performer FROM songs');
     return result.rows;
+  }
+
+  async getSongById(id) {
+    const query = {
+      text: 'SELECT * FROM songs WHERE id = $1',
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rows.length) {
+      throw new NotFoundError('Songs Tidak Ditemukan');
+    }
+    return result.rows.map(mapSongsToDBModel)[0];
   }
 }
 
