@@ -8,6 +8,7 @@ class AlbumsHandler {
     this.postAlbumHandler = this.postAlbumHandler.bind(this);
     this.getAlbumByIdHandler = this.getAlbumByIdHandler.bind(this);
     this.putAlbumByIdHandler = this.putAlbumByIdHandler.bind(this);
+    this.deleteAlbumByIdHandler = this.deleteAlbumByIdHandler.bind(this);
   }
 
   async postAlbumHandler(request, h) {
@@ -78,6 +79,33 @@ class AlbumsHandler {
       const response = h.response({
         status: 'success',
         message: 'Berhasil Update Album',
+      }).code(200);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        }).code(error.statusCode);
+        return response;
+      }
+      // Server Error
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      }).code(500);
+      console.log(error);
+      return response;
+    }
+  }
+
+  async deleteAlbumByIdHandler(request, h) {
+    try {
+      const { id } = request.params;
+      await this._service.deleteAlbumById(id);
+      const response = h.response({
+        status: 'success',
+        message: 'Berhasil Delete Album',
       }).code(200);
       return response;
     } catch (error) {
