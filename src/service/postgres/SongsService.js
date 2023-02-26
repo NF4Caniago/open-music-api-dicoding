@@ -30,7 +30,19 @@ class SongsService {
     return result.rows[0].id;
   }
 
-  async getSongs() {
+  async getSongs(title = null, performer = null) {
+    if (title && performer) {
+      const result = await this._pool.query(
+        `SELECT id, title, performer FROM songs WHERE lower(title) LIKE '%${title}%' AND lower(performer) LIKE '%${performer}%'`,
+      );
+      return result.rows;
+    }
+    if (title || performer) {
+      const result = await this._pool.query(
+        `SELECT id, title, performer FROM songs WHERE lower(title) LIKE '%${title}%' OR lower(performer) LIKE '%${performer}%'`,
+      );
+      return result.rows;
+    }
     const result = await this._pool.query('SELECT id, title, performer FROM songs');
     return result.rows;
   }
@@ -92,6 +104,17 @@ class SongsService {
       if (!result.rows.length) {
         throw new NotFoundError('Song Tidak Ditemukan');
       }
+    }
+  }
+
+  async deleteSongById(id) {
+    const query = {
+      text: 'DELETE FROM songs WHERE  id = $1 RETURNING id',
+      values: [id],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rows.length) {
+      throw new NotFoundError('Song Tidak Ditemukan');
     }
   }
 }

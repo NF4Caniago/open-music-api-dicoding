@@ -9,7 +9,7 @@ class SongsHandler {
     this.getSongsHandler = this.getSongsHandler.bind(this);
     this.getSongByIdHandler = this.getSongByIdHandler.bind(this);
     this.putSongByIdHandler = this.putSongByIdHandler.bind(this);
-    // this.deleteSongsByIdHandler = this.deleteSongsByIdHandler.bind(this);
+    this.deleteSongByIdHandler = this.deleteSongByIdHandler.bind(this);
   }
 
   async postSongHandler(request, h) {
@@ -48,7 +48,8 @@ class SongsHandler {
 
   async getSongsHandler(request, h) {
     try {
-      const songs = await this._service.getSongs();
+      const { title, performer } = request.query;
+      const songs = await this._service.getSongs(title, performer);
       const response = h.response({
         status: 'success',
         data: {
@@ -136,7 +137,32 @@ class SongsHandler {
     }
   }
 
-  // async deleteSongsByIdHandler(request, h) {}
+  async deleteSongByIdHandler(request, h) {
+    try {
+      const { id } = request.params;
+      await this._service.deleteSongById(id);
+      const response = h.response({
+        status: 'success',
+        message: 'Songs Berhasil di Delete',
+      }).code(200);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        }).code(error.statusCode);
+        return response;
+      }
+      // server error
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      }).code(500);
+      console.log(error.message);
+      return response;
+    }
+  }
 }
 
 module.exports = SongsHandler;
