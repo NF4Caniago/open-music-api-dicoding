@@ -35,6 +35,7 @@ class AlbumsService {
     if (!result.rows.length) {
       throw new NotFoundError('Album tidak Ditemukan');
     }
+    console.log(result.rows[0]);
     return result.rows[0];
   }
 

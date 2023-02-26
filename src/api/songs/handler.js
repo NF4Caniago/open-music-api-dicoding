@@ -8,7 +8,7 @@ class SongsHandler {
     this.postSongHandler = this.postSongHandler.bind(this);
     this.getSongsHandler = this.getSongsHandler.bind(this);
     this.getSongByIdHandler = this.getSongByIdHandler.bind(this);
-    // this.putSongsByIdHandler = this.putSongsByIdHandler.bind(this);
+    this.putSongByIdHandler = this.putSongByIdHandler.bind(this);
     // this.deleteSongsByIdHandler = this.deleteSongsByIdHandler.bind(this);
   }
 
@@ -103,7 +103,38 @@ class SongsHandler {
     }
   }
 
-  // async putSongsByIdHandler(request, h) {}
+  async putSongByIdHandler(request, h) {
+    try {
+      this._validator.validateSongsPayload(request.payload);
+      const { id } = request.params;
+      const {
+        title, year, genre, performer, duration, albumId,
+      } = request.payload;
+      await this._service.editSongById(id, {
+        title, year, genre, performer, duration, albumId,
+      });
+      const response = h.response({
+        status: 'success',
+        message: 'Song Berhasil Update',
+      }).code(200);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: 'fail',
+          message: error.message,
+        }).code(error.statusCode);
+        return response;
+      }
+      // server error
+      const response = h.response({
+        status: 'error',
+        message: 'Maaf, terjadi kegagalan pada server kami.',
+      }).code(500);
+      console.log(error.message);
+      return response;
+    }
+  }
 
   // async deleteSongsByIdHandler(request, h) {}
 }
