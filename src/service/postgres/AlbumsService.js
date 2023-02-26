@@ -3,7 +3,7 @@ const { nanoid } = require('nanoid');
 const { Pool } = require('pg');
 const InvariantError = require('../../exceptions/InvariantError');
 const NotFoundError = require('../../exceptions/NotFoundError');
-// const { mapAlbumsToDBModel } = require('../../utils');
+const { mapSongsToDBModel } = require('../../utils');
 
 /* eslint-disable no-underscore-dangle */
 class AlbumsService {
@@ -35,8 +35,19 @@ class AlbumsService {
     if (!result.rows.length) {
       throw new NotFoundError('Album tidak Ditemukan');
     }
-    console.log(result.rows[0]);
     return result.rows[0];
+  }
+
+  async getSongsByAlbumId(albumId) {
+    const query = {
+      text: 'SELECT * FROM songs WHERE album_id = $1',
+      values: [albumId],
+    };
+    const result = await this._pool.query(query);
+    if (!result.rows.length) {
+      return [];
+    }
+    return result.rows.map(mapSongsToDBModel);
   }
 
   async editAlbumById(id, { name, year }) {
