@@ -18,7 +18,7 @@ class SongsService {
     duration = null,
     albumId = null,
   }) {
-    const id = nanoid(16);
+    const id = `song-${nanoid(16)}`;
     const query = {
       text: 'INSERT INTO songs VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id',
       values: [id, title, year, genre, performer, duration, albumId],
@@ -30,7 +30,7 @@ class SongsService {
     return result.rows[0].id;
   }
 
-  async getSongs(title = null, performer = null) {
+  async getSongs({ title = null, performer = null }) {
     if (title && performer) {
       const result = await this._pool.query(
         `SELECT id, title, performer FROM songs WHERE lower(title) LIKE '%${title}%' AND lower(performer) LIKE '%${performer}%'`,
@@ -53,7 +53,7 @@ class SongsService {
       values: [id],
     };
     const result = await this._pool.query(query);
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Songs Tidak Ditemukan');
     }
     return result.rows.map(mapSongsToDBModel)[0];
@@ -67,19 +67,21 @@ class SongsService {
     duration = null,
     albumId = null,
   }) {
-    const text = 'UPDATE songs SET title = $1, year = $2, genre = $3, performer = $4,';
+    // Pemeriksaan dilakukan agar ketika 'duration' & 'albumId' tidak kosong di database
+    // tetapi di payload null, maka nilai di database tidak ikut null
+    const text = 'UPDATE songs SET title = $1, year = $2, genre = $3, performer = $4';
     if (duration && albumId) {
       const query = {
-        text: text.concat(' duration = $5, album_id = &6 WHERE id = $7 RETURNING id'),
+        text: text.concat(', duration = $5, album_id = &6 WHERE id = $7 RETURNING id'),
         values: [title, year, genre, performer, duration, albumId, id],
       };
       const result = await this._pool.query(query);
-      if (!result.rows.length) {
+      if (!result.rowCount) {
         throw new NotFoundError('Song Tidak Ditemukan');
       }
     } else if (duration) {
       const query = {
-        text: text.concat(' duration = $5 WHERE id = $6 RETURNING id'),
+        text: text.concat(', duration = $5 WHERE id = $6 RETURNING id'),
         values: [title, year, genre, performer, duration, id],
       };
       const result = await this._pool.query(query);
@@ -88,7 +90,7 @@ class SongsService {
       }
     } else if (albumId) {
       const query = {
-        text: text.concat(' album_id = $5 WHERE id = $6 RETURNING id'),
+        text: text.concat(', album_id = $5 WHERE id = $6 RETURNING id'),
         values: [title, year, genre, performer, albumId, id],
       };
       const result = await this._pool.query(query);
@@ -113,7 +115,7 @@ class SongsService {
       values: [id],
     };
     const result = await this._pool.query(query);
-    if (!result.rows.length) {
+    if (!result.rowCount) {
       throw new NotFoundError('Song Tidak Ditemukan');
     }
   }
