@@ -6,7 +6,8 @@ const albums = require('./api/albums');
 const songs = require('./api/songs');
 const AlbumsService = require('./service/postgres/AlbumsService');
 const SongsService = require('./service/postgres/SongsService');
-const { AlbumsValidator, SongsValidator } = require('./validator');
+const AlbumsValidator = require('./validator/albums');
+const SongsValidator = require('./validator/songs');
 const ClientError = require('./exceptions/ClientError');
 
 const init = async () => {
