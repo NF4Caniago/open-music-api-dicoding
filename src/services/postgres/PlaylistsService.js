@@ -126,13 +126,14 @@ class PlaylistsService {
     }
     const playlist = result.rows[0];
     if (playlist.owner !== owner) {
+      console.log('heloooooo');
       throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
     }
   }
 
   async verifyPlaylistAccess(playlistId, userId) {
     try {
-      await this.verifyNoteOwner(playlistId, userId);
+      await this.verifyPlaylistOwner(playlistId, userId);
     } catch (error) {
       if (error instanceof NotFoundError) {
         throw new NotFoundError('Playlist tidak ditemukan');
@@ -140,6 +141,7 @@ class PlaylistsService {
       try {
         await this._collaborationsService.verifyCollaborator(playlistId, userId);
       } catch {
+        console.log('masuk sini oiiii');
         throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
       }
     }
