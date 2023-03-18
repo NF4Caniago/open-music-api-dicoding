@@ -7,9 +7,10 @@ const AuthorizationError = require('../../exceptions/AuthorizationError');
 const { mapPlaylistToDBModel } = require('../../utils');
 
 class PlaylistsService {
-  constructor(songsService) {
+  constructor(songsService, collaborationsService) {
     this._pool = new Pool();
     this._songsService = songsService;
+    this._collaborationsService = collaborationsService;
   }
 
   async addPlaylist(owner, { name }) {
@@ -25,16 +26,28 @@ class PlaylistsService {
     return result.rows[0].id;
   }
 
-  async getPlaylists(owner) {
+  async getPlaylists(userId) {
     const query = {
-      text: 'SELECT * FROM playlists WHERE owner = $1',
-      values: [owner],
+      text: `SELECT playlists.*, users.username FROM playlists
+      LEFT JOIN users ON users.id = playlists.owner
+      LEFT JOIN collaborations ON collaborations.playlist_id = playlists.id
+      WHERE collaborations.user_id = $1 OR playlists.owner = $1`,
+      values: [userId],
+    };
+    const result = await this._pool.query(query);
+    return result.rows.map(mapPlaylistToDBModel);
+  }
+
+  // check playlist exist or not
+  async checkPlaylist(id) {
+    const query = {
+      text: 'SELECT * FROM playlists WHERE id = $1',
+      values: [id],
     };
     const result = await this._pool.query(query);
     if (!result.rowCount) {
-      throw new NotFoundError('Playlist User tidak ditemukan');
+      throw new NotFoundError('Playlist tidak ditemukan');
     }
-    return result.rows.map(mapPlaylistToDBModel);
   }
 
   async deletePlaylist(id) {
@@ -114,6 +127,21 @@ class PlaylistsService {
     const playlist = result.rows[0];
     if (playlist.owner !== owner) {
       throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
+    }
+  }
+
+  async verifyPlaylistAccess(playlistId, userId) {
+    try {
+      await this.verifyNoteOwner(playlistId, userId);
+    } catch (error) {
+      if (error instanceof NotFoundError) {
+        throw new NotFoundError('Playlist tidak ditemukan');
+      }
+      try {
+        await this._collaborationsService.verifyCollaborator(playlistId, userId);
+      } catch {
+        throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
+      }
     }
   }
 }
