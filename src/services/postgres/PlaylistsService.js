@@ -126,7 +126,6 @@ class PlaylistsService {
     }
     const playlist = result.rows[0];
     if (playlist.owner !== owner) {
-      console.log('heloooooo');
       throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
     }
   }
@@ -141,7 +140,6 @@ class PlaylistsService {
       try {
         await this._collaborationsService.verifyCollaborator(playlistId, userId);
       } catch {
-        console.log('masuk sini oiiii');
         throw new AuthorizationError('Anda tidak berhak mengakses resource ini');
       }
     }
