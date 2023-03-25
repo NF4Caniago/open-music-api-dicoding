@@ -11,7 +11,6 @@ class ExportsHandler {
 
   async postExportPlaylistHandler(request, h) {
     this._validator.validateExportPlaylistPayload(request.payload);
-    console.log('lolos validator');
     const { playlistId } = request.params;
     await this._playlistsService.verifyPlaylistOwner(playlistId, request.auth.credentials.id);
     const message = {

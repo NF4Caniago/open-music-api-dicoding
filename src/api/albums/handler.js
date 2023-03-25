@@ -2,8 +2,9 @@ const autoBind = require('auto-bind');
 
 /* eslint-disable no-underscore-dangle */
 class AlbumsHandler {
-  constructor(service, validator) {
-    this._service = service;
+  constructor(albumsService, storageService, validator) {
+    this._service = albumsService;
+    this._storageService = storageService;
     this._validator = validator;
     autoBind(this);
   }
@@ -30,6 +31,7 @@ class AlbumsHandler {
           id: album.id,
           name: album.name,
           year: album.year,
+          coverUrl: album.cover,
           songs,
         },
       },
@@ -53,6 +55,18 @@ class AlbumsHandler {
       status: 'success',
       message: 'Berhasil Delete Album',
     }).code(200);
+  }
+
+  async postAlbumCoverHandler(request, h) {
+    const { cover } = request.payload;
+    const { id } = request.params;
+    this._validator.validateCoverHeaders(cover.hapi.headers);
+    const filename = await this._storageService.writeFile(cover, cover.hapi);
+    await this._service.addCoverAlbum(id, `http://${process.env.HOST}:${process.env.PORT}/albums/images/${filename}`);
+    return h.response({
+      status: 'success',
+      message: 'Sampul berhasil diunggah',
+    }).code(201);
   }
 }
 
