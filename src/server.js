@@ -6,6 +6,7 @@ const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
 const path = require('path');
 const Inert = require('@hapi/inert');
+const config = require('./utils/config');
 
 const ClientError = require('./exceptions/ClientError');
 
@@ -51,8 +52,12 @@ const ExportsValidator = require('./validator/exports');
 // Storage
 const StorageService = require('./services/storage/StorageService');
 
+// cache
+const CacheService = require('./services/redis/CacheService');
+
 const init = async () => {
-  const albumsService = new AlbumsService();
+  const cacheService = new CacheService();
+  const albumsService = new AlbumsService(cacheService);
   const songsService = new SongsService();
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
@@ -62,8 +67,8 @@ const init = async () => {
   const storageService = new StorageService(path.resolve(__dirname, 'api/albums/file/images'));
 
   const server = Hapi.server({
-    port: process.env.PORT,
-    host: process.env.HOST,
+    port: config.app.port,
+    host: config.app.host,
     routes: {
       cors: {
         origin: ['*'],

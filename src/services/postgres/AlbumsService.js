@@ -6,8 +6,9 @@ const { mapSongsToDBModel } = require('../../utils');
 
 /* eslint-disable no-underscore-dangle */
 class AlbumsService {
-  constructor() {
+  constructor(cacheService) {
     this._pool = new Pool();
+    this._cacheService = cacheService;
   }
 
   async addAlbum({ name, year }) {
@@ -103,6 +104,7 @@ class AlbumsService {
         values: [resultCheckLike.rows[0].id],
       };
       await this._pool.query(queryDeleteLike);
+      await this._cacheService.delete(`albumLikes:${albumId}`);
       like = 'dislike';
     } else {
       const id = `album-like-${nanoid(16)}`;
@@ -110,22 +112,35 @@ class AlbumsService {
         text: 'INSERT INTO user_album_likes VALUES($1, $2, $3) RETURNING id',
         values: [id, userId, albumId],
       };
-
       const result = await this._pool.query(queryAddLike);
       if (!result.rows[0].id) {
         throw new InvariantError('Album Gagal Ditambahkan');
       }
+      await this._cacheService.delete(`albumLikes:${albumId}`);
     }
     return like;
   }
 
   async getLikes(id) {
-    const query = {
-      text: 'SELECT * FROM user_album_likes WHERE album_id = $1',
-      values: [id],
-    };
-    const result = await this._pool.query(query);
-    return result.rowCount;
+    try {
+      // mendapatkan catatan dari cache
+      const result = await this._cacheService.get(`albumLikes:${id}`);
+      return {
+        likes: JSON.parse(result),
+        source: 'cache',
+      };
+    } catch (error) {
+      const query = {
+        text: 'SELECT * FROM user_album_likes WHERE album_id = $1',
+        values: [id],
+      };
+      const result = await this._pool.query(query);
+      await this._cacheService.set(`albumLikes:${id}`, JSON.stringify(result.rowCount));
+      return {
+        likes: result.rowCount,
+        source: 'database',
+      };
+    }
   }
 }
 
